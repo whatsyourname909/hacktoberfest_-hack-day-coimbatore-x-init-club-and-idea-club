@@ -141,7 +141,18 @@ The current codebase contains:
 - the synthetic demo dataset and its generator (`data/`)
 - 9 automated tests (`tests/test_pipeline.py`)
 
-TODO: add the team's account of who built what, and when, during the Hack Day.
+All of this was built during the Hack Day (October 8, 2026, 9:00 AM – 5:00 PM IST). The timeline below comes from the repository's git history and the timestamps of the project files (times in IST):
+
+| Time | Work |
+|---|---|
+| from 10:56 | First project files created: the LangGraph pipeline, analysis tools, schemas, Streamlit UI, demo dataset and tests |
+| 11:22–11:34 | README set up: project description, architecture, team and problem statement |
+| 12:38 | First version of the app added to the repository |
+| 12:43–13:20 | Krishav's version of the app and its verification notes, merged into `main` through pull request #1 (merged by Rahul) |
+| 14:04–14:07 | Improved version merged into `main`: redesigned interface, Gemma request timeout and safe fallback, source-archive script |
+| 14:23–14:48 | Fixes and documentation: clearer fallback wording, unused dependency removed, MIT license, AI tool disclosure, challenges and learnings, team contributions, per-step reporting of real Gemma use, Excel and TSV uploads, and text-encoding detection |
+
+The repository's first commit (05:24) is the organizers' submission template, not team work.
 
 ### Team Contributions
 
@@ -306,7 +317,7 @@ The 9 tests cover the bundled dataset's baseline, each analysis tool, verificati
 - [x] Innovation and differentiation explained
 - [x] Architecture included
 - [x] Technical implementation documented
-- [ ] Work completed during the hackathon documented
+- [x] Work completed during the hackathon documented
 - [x] Team contributions documented
 - [x] Working application is functional
 - [ ] Live application link added where applicable
