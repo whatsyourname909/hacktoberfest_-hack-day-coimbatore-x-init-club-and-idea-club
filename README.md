@@ -307,7 +307,7 @@ The 9 tests cover the bundled dataset's baseline, each analysis tool, verificati
 - [ ] Demo video added
 - [x] AI and open-source components documented
 - [x] Setup and usage instructions tested
-- [ ] Challenges and learnings documented
+- [x] Challenges and learnings documented
 - [ ] Devpost submission completed
 - [ ] Devpost link added
 - [x] Credits added
