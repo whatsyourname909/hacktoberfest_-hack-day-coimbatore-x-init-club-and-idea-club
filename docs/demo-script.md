@@ -5,10 +5,10 @@ For the submission's demo video. Record the screen with the app open, ideally th
 **Before recording**
 
 - Open the app and wait until it has fully loaded. If it's the deployed version, open it a minute early so it's awake.
-- Select **Try the demo dataset** in the sidebar.
+- In the sidebar, choose **Select Demo Dataset** and pick **Sales Revenue Analysis**.
 - Close other tabs and notifications.
 - Decide honestly which version you're showing:
-  - **With Gemma working:** the results will show "Gemma AI actively used for: YES …". Use the Gemma lines below.
+  - **With Gemma working:** the **AI Pipeline Status** panel shows green dots and a count above 0/5 stages. Use the Gemma lines below.
   - **Without Gemma:** say that this run uses the offline fallback. Don't claim Gemma produced it.
 
 ---
@@ -25,11 +25,11 @@ For the submission's demo video. Record the screen with the app open, ideally th
 
 ## 0:35–0:50 · The data and question
 
-*Show the sidebar's dataset overview, then click the example question **"Why did revenue fall in March?"**.*
+*Show the sidebar's dataset overview, then click the suggested query **"Why did revenue fall in March?"**.*
 
 > "Here's a sales dataset. A customer stopped ordering in March, so that's the obvious suspect. Let's ask why revenue fell."
 
-*Click **Investigate**.*
+*Click **Execute Analysis**.*
 
 ## 0:50–1:05 · The baseline
 
@@ -51,11 +51,11 @@ For the submission's demo video. Record the screen with the app open, ideally th
 
 ## 1:35–1:50 · Why you can trust it
 
-*Open one evidence trace, then point at the final answer and "All calculations independently verified".*
+*Open one item in the **Evidence Trace**, then point at the **Synthesis** and "All calculations independently verified".*
 
 > "Every verdict comes from thresholds fixed before the test ran, and every number is recalculated and verified. The final answer talks about contribution, never causation."
 
-**If Gemma was used**, point at the "Gemma AI actively used for" line:
+**If Gemma was used**, point at the **AI Pipeline Status** panel:
 
 > "Gemma 4 interprets the question, proposes the explanations and challenges the evidence as a critic, but it never does the maths and can't change a verdict."
 

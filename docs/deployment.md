@@ -31,12 +31,12 @@ This gives the project a public link for the README's "Live Application" and the
 
 ## Check that it works
 
-1. Open the app's URL. The sidebar should show **"🔑 Gemma API key set"** and the model name.
-2. With the demo dataset selected, click the example **"Why did revenue fall in March?"**, then **Investigate**.
+1. Open the app's URL. Under **System Status** in the sidebar, it should show **"Gemma API key set"** with a green dot, and the model name.
+2. Choose **Select Demo Dataset** and pick **Sales Revenue Analysis**. Click the suggested query **"Why did revenue fall in March?"**, then **Execute Analysis**.
 3. Check the results:
    - Baseline: 10,000,000 → 7,940,000 (−20.6%)
    - Customer: 8.0%, WEAKENED. Product mix: 67.0%, SUPPORTED. Region: 14.0%, WEAKENED. Data quality: REJECTED. Seasonality: UNTESTABLE.
-   - The line **"Gemma AI actively used for:"** shows which steps Gemma really answered. **If every step says NO, Gemma isn't working** (wrong key, wrong model name, or the model isn't available on that key), and the app is running on its local fallback.
+   - The **AI Pipeline Status** panel shows which of the five stages Gemma really answered: a green dot means it answered, and the count shows how many (for example, 3/5 stages). **If it shows 0/5 stages, Gemma isn't working** (wrong key, wrong model name, or the model isn't available on that key), and the app is running on its local fallback.
 
 ## After deploying
 
@@ -50,5 +50,5 @@ This gives the project a public link for the README's "Live Application" and the
 |---|---|
 | The build fails while installing packages | The Python version in Advanced settings (use 3.11 or newer), then redeploy |
 | "Gemma API not configured" in the sidebar | The Secrets weren't saved, or `GEMMA_API_KEY` is misspelled |
-| Every Gemma step says NO | The key is invalid, or `GEMMA_MODEL` isn't available for that key. Try the investigation locally with the same key to compare. |
+| AI Pipeline Status shows 0/5 stages | The key is invalid, or `GEMMA_MODEL` isn't available for that key. Try the investigation locally with the same key to compare. |
 | The app is slow to open | It was asleep. Wait for it to wake up, then reload. |

@@ -285,8 +285,8 @@ These setup steps were tested on a fresh clone of `main` (macOS, Python 3.13): i
 1. In the sidebar, pick one of the four demo datasets (sales, marketing, HR attrition, e-commerce) and try its suggested questions, or upload your own file: **CSV, TSV or Excel (.xlsx, .xls)**. CSV and TSV text encodings are detected automatically (UTF-8, Windows-1252, Latin-1 and others). The sidebar shows the dataset profile.
    The sidebar also shows whether a Gemma API key is set; whether Gemma actually answered each step is shown with the results.
 2. Type a question, for example "Why did revenue fall in March?".
-3. Click **Investigate**.
-4. Read the baseline, the hypothesis table with verdicts, and the evidence for each hypothesis, then the final synthesis.
+3. Click **Execute Analysis**.
+4. Check the **AI Pipeline Status** panel, which shows which of the five stages Gemma actually answered (green dot) and how many (for example, 0/5 stages means the local fallback ran). Then read the baseline, the hypothesis table with verdicts, and the evidence for each hypothesis, then the final synthesis.
 
 ## Challenges and Learnings
 

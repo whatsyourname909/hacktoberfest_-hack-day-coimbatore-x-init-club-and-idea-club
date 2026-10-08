@@ -53,7 +53,7 @@ If the form asks which AI tools were used, list all four the team used:
 
 Gemma 4 (`gemma-4-26b-a4b-it`), called through the Gemini API, is the reasoning engine of our investigation: it turns the business question into a validated plan, proposes competing explanations, and challenges the evidence as an adversarial critic. Code does every calculation and applies pre-committed thresholds, so Gemma's ideas are tested against the data instead of trusted blindly, and the app shows which steps Gemma actually answered.
 
-**Only enter this category if a live run shows Gemma answering** ("Gemma AI actively used for: YES …").
+**Only enter this category if a live run shows Gemma answering** (the **AI Pipeline Status** panel shows more than 0/5 stages).
 
 ### Best Open-Source AI Project
 
@@ -66,6 +66,6 @@ Meets the category's rules: public GitHub repository ✅, open-source (MIT) lice
 ## Before submitting
 
 1. **Deploy the app and record the video,** then add both links above and in the README.
-2. **Confirm Gemma works live.** Run one investigation with the API key and check the "Gemma AI actively used for" line. If Gemma isn't answering, skip "Best Use of Gemma 4", and in the description say the demo runs on the offline fallback.
+2. **Confirm Gemma works live.** Run one investigation with the API key and check the **AI Pipeline Status** panel: green dots show the stages Gemma answered, and 0/5 stages means it didn't answer at all. If Gemma isn't answering, skip "Best Use of Gemma 4", and in the description say the demo runs on the offline fallback.
 3. **Make sure `main` is up to date** before submitting, since the repository link opens `main`.
 4. **Check the team:** all four members must be on the MLH submission (the event requires exactly 4).
