@@ -78,6 +78,8 @@ def parse_question(state: InvestigationState) -> dict:
         plan = structured_call(QuestionPlan, prompt)
         if plan is None:
             plan = _fallback_plan(state["question"], info)
+            if os.getenv("GEMMA_API_KEY"):
+                warning = "Gemma response could not be validated; used the local parser instead."
         else:
             if plan.metric not in info["numeric_columns"]:
                 raise ValueError(f"Gemma selected unknown metric: {plan.metric}")
@@ -96,7 +98,7 @@ def parse_question(state: InvestigationState) -> dict:
         except Exception as fallback_exc:
             return {"error": str(fallback_exc)}
         if os.getenv("GEMMA_API_KEY"):
-            warning = f"Gemma question parsing was unavailable; used the local parser ({exc})."
+            warning = f"Gemma parsing encountered an issue; used the local parser instead."
     return {
         "metric": plan.metric, "date_column": plan.date_column,
         "period_a": plan.period_a, "period_b": plan.period_b,
@@ -165,7 +167,7 @@ def generate_hypotheses(state: InvestigationState) -> dict:
         return {"hypotheses": [item.model_dump() for item in hypotheses], "error": None}
     except Exception as exc:
         return {"hypotheses": [item.model_dump() for item in _fallback_hypotheses(state)],
-                "warning": f"Used schema-validated fallback hypotheses ({exc})." if os.getenv("GEMMA_API_KEY") else None,
+                "warning": "Used locally generated hypotheses." if os.getenv("GEMMA_API_KEY") else None,
                 "error": None}
 
 
@@ -365,7 +367,7 @@ def _fallback_verdict(hypothesis: dict, test_result: dict | None, contract: dict
         verdict = "SUPPORTED" if mix_effect_pct >= threshold else "WEAKENED" if mix_effect_pct >= weaken else "REJECTED"
         return {"hypothesis_id": hypothesis["id"], "verdict": verdict,
                 "rationale": f"The unit-share shift accounts for {mix_effect_pct:.1f}% of the net change when valued at period A prices.",
-                "contribution_pct": mix_effect_pct, "alternative_explanation": "Volume and price effects can also explain part of the total change."}
+                "contribution_pct": mix_effect_pct, "alternative_explanation": "Volume and price effects can also contribute to the total change."}
     rows = result.get("results", [])
     if not rows:
         return {"hypothesis_id": hypothesis["id"], "verdict": "UNTESTABLE", "rationale": "No dimension groups were available."}
