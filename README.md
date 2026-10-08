@@ -7,12 +7,12 @@
 **Team Name:** TODO
 
 
-| Member | Contribution   |
-| ------ | -------------- |
-| TODO   | TODO           |
-| TODO   | TODO           |
-| TODO   | TODO           |
-| TODO   | TODO           |
+| Member                    | Contribution   |
+| ------------------------- | -------------- |
+| Krishav JS (Team Leader)  | TODO           |
+| Pranav Senthil            | TODO           |
+| Rahul Srinivasan          | TODO           |
+| Mohal Raj                 | TODO           |
 
 
 ## Problem Statement
@@ -103,10 +103,10 @@ TODO: complete at the end of the Hack Day with what was actually built and worki
 
 ### Team Contributions
 
-- **TODO:** TODO
-- **TODO:** TODO
-- **TODO:** TODO
-- **TODO:** TODO
+- **Krishav JS (Team Leader):** TODO
+- **Pranav Senthil:** TODO
+- **Rahul Srinivasan:** TODO
+- **Mohal Raj:** TODO
 
 ## Working Application
 
@@ -197,7 +197,7 @@ TODO
 ## Submission Checklist
 
 - [x] Project title and description added
-- [ ] All team members listed
+- [x] All team members listed
 - [x] Problem clearly explained
 - [ ] Reason for choosing the problem explained
 - [x] Solution and key features documented
