@@ -23,7 +23,10 @@ When a business metric changes, people ask "why?". AI data assistants are good a
 
 ### Why We Chose This Problem
 
-TODO: the team's reason, in its own words.
+- **AI answers can sound right without being right.** AI data tools are spreading fast, and they answer with the same confidence whether they're right or wrong. A convincing wrong explanation is worse than no answer, because people act on it. We wanted an AI analyst that has to doubt its own explanations.
+- **The most obvious explanation is often wrong.** When a metric drops, people latch onto the most memorable event, like a large customer leaving, even when it accounts for only a small part of the change. We wanted a tool that measures how much each explanation actually accounts for.
+- **People can't check how an AI reached its answer.** Most "chat with your data" tools give a final answer with no way to inspect the reasoning. We wanted every claim to be traceable to a specific test and calculation.
+- **AI tools rarely admit what the data can't answer.** We wanted a system that can say an explanation is untestable, for example seasonality with only three months of data, instead of inventing an answer.
 
 ## Solution
 
@@ -199,7 +202,7 @@ TODO
 - [x] Project title and description added
 - [x] All team members listed
 - [x] Problem clearly explained
-- [ ] Reason for choosing the problem explained
+- [x] Reason for choosing the problem explained
 - [x] Solution and key features documented
 - [x] Innovation and differentiation explained
 - [x] Architecture included
