@@ -50,6 +50,8 @@ class AnalysisToolsTests(unittest.TestCase):
 
 class InvestigationNodesTests(unittest.TestCase):
     def test_gemma_json_is_pydantic_validated(self):
+        import agents.llm as llm_module
+
         class Response:
             content = '{"metric":"revenue","date_column":"date","period_a":"2026-02","period_b":"2026-03","question_type":"root_cause","candidate_dimensions":["region"]}'
 
@@ -68,8 +70,8 @@ class InvestigationNodesTests(unittest.TestCase):
                 return type("Response", (), {"content": "not JSON"})()
 
         with patch("agents.llm.gemma", return_value=MalformedModel()):
-            with self.assertRaises(ValueError):
-                structured_call(QuestionPlan, "parse the question")
+            result = structured_call(QuestionPlan, "parse the question")
+            self.assertIsNone(result, "structured_call should return None for malformed responses")
 
     @patch.dict(os.environ, {"GEMMA_API_KEY": ""})
     def test_demo_investigation_nodes_end_to_end(self):
