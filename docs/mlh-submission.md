@@ -67,9 +67,16 @@ Argue With My Data is built entirely on open-source components (LangGraph, LangC
 
 ## Before submitting
 
-1. **Push the code.** It's only on the local `pranav` branch. Commit, push and merge it into `main`, so the GitHub link shows it.
-2. **Confirm Gemma works live.** The one live attempt stalled, and the README still says TODO. Don't enter "Best Use of Gemma 4" unless a real Gemma run succeeds.
-3. **Add a license.** "Best Open-Source AI Project" needs one, and the README's License section is still TODO. MIT is the usual choice.
+1. **Bring `main` up to date.** The code is on GitHub's `main`, but the latest README and documentation fixes are on `pranav`. Merge them into `main`, because the repository link judges open shows `main`.
+2. **Confirm Gemma works live.** The code on `main` uses `gemma-4-26b-a4b-it`, but no live Gemma run has succeeded yet, and the README still says so. Don't enter "Best Use of Gemma 4" unless a real Gemma 4 run succeeds.
+3. **Add a license.** The event's "Best Open-Source AI Project" rules require a public GitHub repository **and** an open-source license. The README's License section is still TODO. MIT is the usual choice.
 4. **Add the live app link and demo video** if you have them. The demo video should say the event name at the start.
 5. **Complete the README's TODOs:** team contributions, AI tools used by every teammate, challenges and learnings.
-6. **List teammates' AI tools.** `ai_tools` above covers only Claude Code with Claude Opus 5.5. If teammates used other tools (for example Codex, which may have written the original code), MLH requires disclosing them, in the README and on Devpost.
+6. **List teammates' AI tools.** `ai_tools` above covers only Claude Code with Claude Opus 5.5. If teammates used other tools (for example Codex, which may have written the original code), MLH requires disclosing them, in the README and in the submission.
+
+## Notes from the event page
+
+- This event takes submissions **through MLH (OrganizerHQ)**, not Devpost.
+- The submission window closes at **5:00 PM IST on Oct 8, 2026**.
+- Teams must have exactly 4 members.
+- DevRelay's project tools accept only name, description, repository URL, technologies and demo/video URLs. `short_description`, `ai_tools`, `extra_links` and the category answers have to be pasted into the MLH form by hand.

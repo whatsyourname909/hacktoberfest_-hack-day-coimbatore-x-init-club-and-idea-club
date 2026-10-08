@@ -127,9 +127,9 @@ def _fallback_hypotheses(state: InvestigationState) -> list[Hypothesis]:
     for dimension in dimensions[:3]:
         name = str(dimension).lower()
         test = "mix" if any(term in name for term in ("product", "item", "category", "sku")) else "contribution"
-        phrase = "mix shift explains a measurable portion of the change" if test == "mix" else "changes explain a measurable portion of the change"
         hypotheses.append(Hypothesis(id=f"h{len(hypotheses) + 1}",
-                                     statement=f"Changes across {dimension} {phrase}.",
+                                     statement=(f"A shift in the {dimension} mix explains a measurable part of the change." if test == "mix"
+                                                else f"Changes by {dimension} explain a measurable part of the change."),
                                      test=test, dimension=dimension))
     hypotheses.append(Hypothesis(id=f"h{len(hypotheses) + 1}",
                                  statement="Missing, duplicated, or incomplete records explain a material part of the change.",

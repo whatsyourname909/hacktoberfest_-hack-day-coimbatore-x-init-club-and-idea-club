@@ -66,6 +66,10 @@ flowchart TD
 
 Any node that reports an error ends the run with a clear message instead of continuing.
 
+The same flow, as the user experiences it:
+
+![Argue With My Data flow: choose data, ask a question, test hypotheses, verify, critic verdicts, evidence-based summary](mermaid-diagram.png)
+
 ### Technology Stack
 
 
@@ -166,7 +170,7 @@ TODO: how to access the deployed application and what can be tested.
 ### Open Source Components
 
 - **LangGraph:** orchestration of the investigation state machine
-- **LangChain (`langchain`, `langchain-google-genai`):** the connection to the Gemma model
+- **LangChain (`langchain-google-genai`):** the connection to the Gemma model
 - **pandas, NumPy:** data processing and calculations
 - **DuckDB:** analytical queries in the comparison tools
 - **Pydantic:** validation of structured model output
@@ -175,7 +179,21 @@ TODO: how to access the deployed application and what can be tested.
 - **python-dotenv:** loading environment variables
 - **Demo dataset:** synthetic, created by the team with `data/generate_demo.py`
 
-TODO: licenses and attribution for each component.
+Licenses, as declared in each package's metadata (versions installed from `requirements.txt` during testing):
+
+| Component | Version tested | License |
+|---|---|---|
+| Streamlit | 1.65.0 | Apache-2.0 |
+| LangGraph | 1.2.14 | MIT |
+| langchain-google-genai | 4.4.0 | MIT |
+| pandas | 3.0.6 | BSD-3-Clause |
+| NumPy | 2.5.3 | BSD-3-Clause (with bundled components under other permissive licenses) |
+| Pydantic | 2.13.5 | MIT |
+| python-dotenv | 1.2.4 | BSD-3-Clause |
+| DuckDB | 1.5.6 | MIT |
+| Plotly | 6.9.0 | MIT |
+
+The Gemma models are provided by Google under Google's own terms for Gemma; check the terms for the model version you use. All of these components were developed by their respective authors, not by this team.
 
 ## Setup and Usage
 
@@ -225,6 +243,8 @@ To run the tests:
 python -m unittest discover -s tests -v
 ```
 
+These setup steps were tested on a fresh clone of `main` (macOS, Python 3.13): installation succeeded, all 9 tests passed, and the demo investigation in the app reproduced the verified results above without an API key.
+
 ### Usage
 
 1. In the sidebar, upload a CSV or choose **Try the demo dataset**. The sidebar shows the dataset profile.
@@ -272,11 +292,11 @@ The 9 tests cover the bundled dataset's baseline, each analysis tool, verificati
 - [x] Technical implementation documented
 - [ ] Work completed during the hackathon documented
 - [ ] Team contributions documented
-- [ ] Working application is functional
+- [x] Working application is functional
 - [ ] Live application link added where applicable
 - [ ] Demo video added
 - [ ] AI and open-source components documented
-- [ ] Setup and usage instructions tested
+- [x] Setup and usage instructions tested
 - [ ] Challenges and learnings documented
 - [ ] Devpost submission completed
 - [ ] Devpost link added
