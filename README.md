@@ -1,171 +1,208 @@
-# [Project Name]
+# Argue With My Data
 
-> [One-line description of the project and what it does.]
+> An AI data investigation agent that tries to falsify its own explanations before it answers. Upload a CSV, ask why a metric changed, and it tests competing explanations with deterministic calculations to show which ones the evidence supports, weakens, rejects or can't test.
 
 ## Team
 
-**Team Name:** [Team Name]
+**Team Name:** TODO
 
 
 | Member | Contribution   |
 | ------ | -------------- |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
+| TODO   | TODO           |
+| TODO   | TODO           |
+| TODO   | TODO           |
+| TODO   | TODO           |
 
 
 ## Problem Statement
 
 ### The Problem
 
-[Describe the problem being addressed, who is affected by it, and the context in which it occurs.]
+When a business metric changes, people ask "why?". AI data assistants are good at producing a plausible answer, such as "revenue fell because a major customer stopped ordering". A plausible answer isn't necessarily correct. A single dramatic event may account for only a small share of a change, while the real driver is spread thinly across the data. Analysts, managers and founders who act on the plausible answer can make the wrong decision.
 
 ### Why We Chose This Problem
 
-[Explain why the team selected this problem and why solving it is important.]
+TODO: the team's reason, in its own words.
 
 ## Solution
 
-[Describe the proposed solution and how it addresses the problem.]
+Argue With My Data treats a "why" question as an investigation instead of a chat. It proposes several competing explanations, defines in advance how each one could be falsified, runs deterministic tests on the data, checks the calculations, has a critic challenge the results, and only then reports which explanations hold up. It also says when an explanation can't be tested with the data available.
 
 ### Key Features
 
-- [Feature 1]
-- [Feature 2]
-- [Feature 3]
-- [Feature 4]
+- **Competing hypotheses:** several measurable explanations are tested, not just the first plausible one.
+- **Falsification contracts:** each hypothesis gets a structured test with explicit, visible thresholds for support and rejection.
+- **Deterministic evidence:** aggregations, percentages and contributions are calculated in code, never by the language model.
+- **Four verdicts:** SUPPORTED, WEAKENED, REJECTED or UNTESTABLE, with an evidence trace (claim → test → calculation → result → verdict) for each.
+- **Causality guardrail:** results are reported as contribution ("accounts for 40% of the decline"), not causation.
 
 ## Innovation and Differentiation
 
-[Explain what is innovative about the approach and how it differs from existing or conventional solutions.]
+Most AI data tools follow CSV → LLM → answer. Argue With My Data puts an adversarial loop between the question and the answer: the model proposes explanations and tests, code computes the evidence, a verification step checks it, and a critic challenges the explanations before any conclusion is given. The system can weaken or reject its own first explanation, and can return UNTESTABLE instead of forcing an answer when the data is insufficient.
 
 ## Technical Implementation
 
 ### Architecture
 
-[Add the system architecture or workflow Mermaid diagram here.]
+```mermaid
+flowchart TD
+    S([START]) --> A[profile_data]
+    A --> B[parse_question<br/>Gemma]
+    B --> C[calculate_baseline<br/>code]
+    C --> D[generate_hypotheses<br/>Gemma]
+    D --> E[plan_tests<br/>Gemma writes the falsification contract]
+    E --> F[execute_test<br/>deterministic analysis tools]
+    F --> G[verify_result<br/>code]
+    G --> H[critic<br/>Gemma]
+    H --> R{route_next}
+    R -->|more tests needed, round limit not reached| E
+    R -->|enough evidence| I[final_synthesis<br/>Gemma]
+    I --> Z([END])
+```
 
 ### Technology Stack
 
 
-| Category        | Technologies                |
-| --------------- | --------------------------- |
-| Frontend        | [Technologies / N/A]        |
-| Backend         | [Technologies / N/A]        |
-| Database        | [Technologies / N/A]        |
-| AI / ML         | [Models / frameworks / N/A] |
-| Infrastructure  | [Technologies / N/A]        |
-| APIs / Services | [Services / N/A]            |
+| Category        | Technologies                                                     |
+| --------------- | ---------------------------------------------------------------- |
+| Frontend        | Streamlit, Plotly                                                |
+| Backend         | Python 3.11+, LangGraph, LangChain, pandas, NumPy, DuckDB, Pydantic |
+| Database        | N/A                                                              |
+| AI / ML         | Gemma                                                            |
+| Infrastructure  | TODO                                                             |
+| APIs / Services | TODO: Gemma provider                                             |
 
-
-If a category or technology is not implemented in the project, specify `N/A` instead of leaving the field blank.
 
 ### How It Works
 
-[Explain the major components of the system and how they interact.]
+1. **Profile the data:** detect columns, data types, date columns, likely metrics and dimensions, missing values and the date range.
+2. **Parse the question:** Gemma turns the question into structured parameters (metric, comparison periods, question type, relevant dimensions), using only columns that exist.
+3. **Calculate the baseline:** code computes the overall change between the two periods.
+4. **Generate hypotheses:** Gemma proposes 3–5 measurable, competing explanations.
+5. **Plan tests:** each hypothesis becomes a falsification contract naming the analysis tool, its arguments and explicit thresholds.
+6. **Execute tests:** a controlled tool registry validates the request and runs a deterministic analysis tool. No model-generated code is executed.
+7. **Verify:** code checks that the results are internally consistent and match the hypothesis being tested.
+8. **Critic:** Gemma challenges the explanations against the evidence and looks for alternatives.
+9. **Route:** LangGraph either runs further tests (with a round limit) or moves to the final synthesis.
+10. **Final synthesis:** Gemma writes an evidence-backed answer using only calculated values, with caveats and untestable hypotheses listed.
+
+Analysis tools: `compare_periods`, `breakdown_by_dimension`, `contribution_to_change`, `mix_analysis`, `trend_analysis`, `data_quality_check`, and optionally `decompose_price_volume` when price and quantity data exist.
 
 ### Technical Decisions
 
-[Explain important architectural, algorithmic, or engineering decisions made during development.]
+- **The language model never performs important calculations.** Gemma proposes, plans, critiques and explains; pandas and DuckDB calculate.
+- **A controlled tool registry** instead of model-generated code, so every analysis is validated and reproducible.
+- **Thresholds live in the falsification contract**, not inside prompts, so they're inspectable.
+- **LangGraph owns the investigation state** and the conditional routing, with a limit on investigation rounds to prevent infinite loops.
+- **All model output that drives execution is validated** with Pydantic schemas.
 
 ## Implementation During the Hackathon
 
-[Describe what the team built during the Hack Day and the major functionality or components completed during the event.]
+TODO: complete at the end of the Hack Day with what was actually built and working.
 
 ### Team Contributions
 
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
+- **TODO:** TODO
+- **TODO:** TODO
+- **TODO:** TODO
+- **TODO:** TODO
 
 ## Working Application
 
-**Live Application:** [Live URL]
+**Live Application:** TODO
 
-[Briefly explain how the deployed application can be accessed and what functionality can be tested.]
-
-The submitted application should be functional and accessible through the provided link where applicable.
+TODO: how to access the deployed application and what can be tested.
 
 ## Demo Video
 
-**Demo Video:** [Video URL]
-
-[Provide a short demonstration of the working project, covering the main user flow and important functionality.]
+**Demo Video:** TODO
 
 ## Open Source and AI Usage
 
 ### AI / Models
 
-- **[Model]:** [How it is used]
+- **Gemma (Google):** interprets the question, proposes hypotheses, writes test plans, acts as the critic and writes the final synthesis. It doesn't compute the numbers. TODO: exact model name and provider.
+- **AI coding assistants:** Claude Code (Anthropic) was used for planning and setup. TODO: list every other AI tool the team used while coding.
 
 ### Open Source Components
 
-- **[Library / Framework]:** [Purpose]
-- **[Dataset]:** [Purpose]
-- **[API / Service]:** [Purpose]
+- **LangGraph:** orchestration of the investigation state machine
+- **LangChain:** integration with the language model
+- **pandas, NumPy:** data processing and calculations
+- **DuckDB:** analytical queries
+- **Pydantic:** validation of structured model output
+- **Streamlit:** user interface
+- **Plotly:** charts
+- **python-dotenv:** loading environment variables
+- **Demo dataset:** TODO (a synthetic sales dataset generated by the team)
 
-[Include relevant licenses, attribution, and acknowledgements for external components.]
+TODO: licenses and attribution for each component.
 
 ## Setup and Usage
 
 ### Prerequisites
 
-- [Requirement]
-- [Requirement]
+- Python 3.11+
+- TODO: access to a Gemma model (provider and API key)
 
 ### Installation
 
 ```bash
-git clone [repository-url]
-cd [project-directory]
-[installation-command]
+git clone https://github.com/whatsyourname909/hacktoberfest_-hack-day-coimbatore-x-init-club-and-idea-club.git
+cd hacktoberfest_-hack-day-coimbatore-x-init-club-and-idea-club
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
+
+TODO: `requirements.txt` is not in the repository yet.
 
 ### Environment Variables
 
 ```env
-[VARIABLE_NAME]=[value]
+TODO: depends on the Gemma provider chosen
 ```
 
-
+Copy `.env.example` to `.env` and fill it in. Never commit `.env`.
 
 ### Running the Project
 
 ```bash
-[run-command]
+TODO: run command (planned: streamlit run app.py)
 ```
 
 ### Usage
 
-[Explain the basic steps required to use the project.]
+TODO: steps to upload a CSV and ask a question, once the app runs.
+
+## Challenges and Learnings
+
+TODO: complete at the end of the Hack Day.
 
 ## Devpost Submission
 
-**Devpost Project:** [Devpost Project URL]
-
-[Add the link to the team's Devpost submission. Ensure the Devpost project page is complete and contains the required project information, links, media, and team details.]
+**Devpost Project:** TODO
 
 ## Credits and License
 
 ### Credits
 
-[Credit libraries, frameworks, datasets, models, APIs, contributors, and other external resources used.]
+LangGraph, LangChain, pandas, NumPy, DuckDB, Pydantic, Streamlit, Plotly, python-dotenv, and Google's Gemma models.
 
 ### License
 
-[License name and/or link.]
+TODO
 
 ## Submission Checklist
 
-- [ ] Project title and description added
+- [x] Project title and description added
 - [ ] All team members listed
-- [ ] Problem clearly explained
+- [x] Problem clearly explained
 - [ ] Reason for choosing the problem explained
-- [ ] Solution and key features documented
-- [ ] Innovation and differentiation explained
-- [ ] Architecture included
+- [x] Solution and key features documented
+- [x] Innovation and differentiation explained
+- [x] Architecture included
 - [ ] Technical implementation documented
 - [ ] Work completed during the hackathon documented
 - [ ] Team contributions documented
