@@ -50,19 +50,21 @@ Most AI data tools follow CSV → LLM → answer. Argue With My Data puts an adv
 
 ```mermaid
 flowchart TD
-    S([START]) --> A[profile_data]
+    S([START]) --> A[profile_data<br/>code]
     A --> B[parse_question<br/>Gemma]
     B --> C[calculate_baseline<br/>code]
     C --> D[generate_hypotheses<br/>Gemma]
-    D --> E[plan_tests<br/>Gemma writes the falsification contract]
-    E --> F[execute_test<br/>deterministic analysis tools]
-    F --> G[verify_result<br/>code]
-    G --> H[critic<br/>Gemma]
+    D --> E[plan_tests<br/>falsification contracts]
+    E --> F[execute_test<br/>registered analysis tools]
+    F --> G[verify_result<br/>code recomputes every result]
+    G --> H[critic<br/>code applies thresholds, Gemma adds challenges]
     H --> R{route_next}
-    R -->|more tests needed, round limit not reached| E
-    R -->|enough evidence| I[final_synthesis<br/>Gemma]
+    R -->|hypotheses still untested, at most 2 rounds| E
+    R -->|all tested| I[final_synthesis]
     I --> Z([END])
 ```
+
+Any node that reports an error ends the run with a clear message instead of continuing.
 
 ### Technology Stack
 
@@ -70,39 +72,72 @@ flowchart TD
 | Category        | Technologies                                                     |
 | --------------- | ---------------------------------------------------------------- |
 | Frontend        | Streamlit, Plotly                                                |
-| Backend         | Python 3.11+, LangGraph, LangChain, pandas, NumPy, DuckDB, Pydantic |
+| Backend         | Python 3.11+, LangGraph, pandas, NumPy, DuckDB, Pydantic         |
 | Database        | N/A                                                              |
-| AI / ML         | Gemma                                                            |
-| Infrastructure  | TODO                                                             |
-| APIs / Services | TODO: Gemma provider                                             |
+| AI / ML         | Gemma 4 (`gemma-4-26b-a4b-it` by default) via LangChain (`langchain-google-genai`) |
+| Infrastructure  | TODO: deployment                                                 |
+| APIs / Services | Google Gemini API (serves the Gemma model)                       |
 
 
 ### How It Works
 
-1. **Profile the data:** detect columns, data types, date columns, likely metrics and dimensions, missing values and the date range.
-2. **Parse the question:** Gemma turns the question into structured parameters (metric, comparison periods, question type, relevant dimensions), using only columns that exist.
-3. **Calculate the baseline:** code computes the overall change between the two periods.
-4. **Generate hypotheses:** Gemma proposes 3–5 measurable, competing explanations.
-5. **Plan tests:** each hypothesis becomes a falsification contract naming the analysis tool, its arguments and explicit thresholds.
-6. **Execute tests:** a controlled tool registry validates the request and runs a deterministic analysis tool. No model-generated code is executed.
-7. **Verify:** code checks that the results are internally consistent and match the hypothesis being tested.
-8. **Critic:** Gemma challenges the explanations against the evidence and looks for alternatives.
-9. **Route:** LangGraph either runs further tests (with a round limit) or moves to the final synthesis.
-10. **Final synthesis:** Gemma writes an evidence-backed answer using only calculated values, with caveats and untestable hypotheses listed.
+1. **Profile the data** (`analysis/profiling.py`): row count, data types, date columns, likely metrics and dimensions, missing values and date range.
+2. **Parse the question** (`parse_question`): Gemma turns the question into a `QuestionPlan` (metric, date column, two periods, question type, candidate dimensions). Column names are checked against the data, and a requested month that isn't in the data is reported, never silently replaced.
+3. **Calculate the baseline** (`calculate_baseline`): code computes both period totals, the absolute change and the percentage change.
+4. **Generate hypotheses** (`generate_hypotheses`): Gemma proposes 3–5 explanations, each tied to one test: `contribution`, `mix`, `data_quality` or `trend`.
+5. **Plan tests** (`plan_tests`): each hypothesis becomes a falsification contract with visible, test-specific thresholds:
 
-Analysis tools: `compare_periods`, `breakdown_by_dimension`, `contribution_to_change`, `mix_analysis`, `trend_analysis`, `data_quality_check`, and optionally `decompose_price_volume` when price and quantity data exist.
+   | Test | SUPPORTED | WEAKENED | REJECTED |
+   |---|---|---|---|
+   | contribution, mix | explains ≥ 50% of the change | ≥ 5% | < 5% |
+   | data quality | ≥ 20% missing values or ≥ 10% duplicates | other material issues | < 5% missing, < 2% duplicates and no missing months |
+   | trend (seasonality) | n/a | history available but not conclusive | **UNTESTABLE** with fewer than 24 months |
+
+6. **Execute tests** (`execute_test`): every contract runs in one pass through the controlled registry in `tools/registry.py`. No model-generated code is executed.
+7. **Verify** (`verify_result`): code recomputes the baseline and every test result independently. Any hypothesis whose evidence fails verification is reported as UNTESTABLE instead of evidence-backed.
+8. **Critic** (`critic`): the verdict is computed in code from the contract's thresholds. Gemma then reviews the evidence as an adversarial critic; its challenge and any alternative explanation are attached as notes, but it can't change a verdict. Notes containing numbers or causal words ("caused", "proves") are discarded.
+9. **Route** (`route_next`): if any hypothesis is still untested, the graph plans and runs tests again, for at most 2 rounds.
+10. **Final synthesis** (`final_synthesis`): a report built from the verified verdicts. Gemma may only pick which SUPPORTED hypothesis to lead with. The report always ends by stating that the results show contribution and association, not causation.
+
+If no `GEMMA_API_KEY` is set, or a Gemma call fails, each Gemma step falls back to a local, schema-validated rule: hypotheses are generated from the dataset's own columns, and verdicts are still computed from the data.
+
+#### Demo result (verified)
+
+Running "Why did revenue fall in March?" on the bundled `data/demo_sales.csv`, with the local fallback (no Gemma key), produces:
+
+| Hypothesis | Test | Result | Verdict |
+|---|---|---|---|
+| Revenue change | baseline | ₹10,000,000 → ₹7,940,000 (−₹2,060,000, −20.6%) | — |
+| A departing customer | contribution by customer | lost customers account for 8.0% of the change | WEAKENED |
+| Product mix shift | mix by product | the unit-share shift accounts for 67.0% of the change | SUPPORTED |
+| Regional decline | contribution by region | the largest region accounts for 14.0% of the change | WEAKENED |
+| Data quality | data quality | 0% missing values, 0% duplicates, 0 missing months | REJECTED |
+| Seasonality | trend | only 2 monthly periods available; 24 needed | UNTESTABLE |
+
+All results passed verification. The demo dataset is synthetic and is regenerated by `data/generate_demo.py`.
 
 ### Technical Decisions
 
-- **The language model never performs important calculations.** Gemma proposes, plans, critiques and explains; pandas and DuckDB calculate.
-- **A controlled tool registry** instead of model-generated code, so every analysis is validated and reproducible.
-- **Thresholds live in the falsification contract**, not inside prompts, so they're inspectable.
-- **LangGraph owns the investigation state** and the conditional routing, with a limit on investigation rounds to prevent infinite loops.
-- **All model output that drives execution is validated** with Pydantic schemas.
+- **The language model never calculates.** Gemma parses, proposes and challenges; pandas and DuckDB compute every number.
+- **Verdicts are applied in code** from thresholds fixed in each contract, so the model can't move the goalposts after seeing the results.
+- **Verification gates every claim:** results are recomputed independently, and unverified evidence is reported as UNTESTABLE.
+- **A controlled tool registry** (`tools/registry.py`) instead of model-generated code.
+- **LangGraph owns the investigation state** and routing, with a hard limit of 2 test rounds and an early stop on errors.
+- **All model output is validated** against Pydantic schemas (`models/schemas.py`) before it's used.
+- **An offline fallback** keeps the app usable without an API key, and still computes verdicts from the data.
 
 ## Implementation During the Hackathon
 
-TODO: complete at the end of the Hack Day with what was actually built and working.
+The current codebase contains:
+
+- the LangGraph investigation graph (`graph/`)
+- the deterministic analysis tools (`analysis/`) and tool registry (`tools/`)
+- the Gemma integration and its schema validation (`agents/llm.py`, `models/schemas.py`)
+- the Streamlit interface (`app.py`, `ui/`)
+- the synthetic demo dataset and its generator (`data/`)
+- 9 automated tests (`tests/test_pipeline.py`)
+
+TODO: add the team's account of who built what, and when, during the Hack Day.
 
 ### Team Contributions
 
@@ -125,20 +160,20 @@ TODO: how to access the deployed application and what can be tested.
 
 ### AI / Models
 
-- **Gemma (Google):** interprets the question, proposes hypotheses, writes test plans, acts as the critic and writes the final synthesis. It doesn't compute the numbers. TODO: exact model name and provider.
-- **AI coding assistants:** Claude Code (Anthropic) was used for planning and setup. TODO: list every other AI tool the team used while coding.
+- **Gemma 4 (Google),** default model `gemma-4-26b-a4b-it`, called through the Google Gemini API using `langchain-google-genai`. It parses the question, proposes hypotheses, reviews the evidence as a critic, and chooses which supported explanation to lead with. It doesn't compute numbers or assign verdicts. TODO: confirm a successful live run with Gemma before the demo.
+- **AI coding assistants:** Claude Code (Anthropic, Claude Opus 5.5) was used for planning, repository setup and documentation. TODO: list every other AI tool the team used while coding.
 
 ### Open Source Components
 
 - **LangGraph:** orchestration of the investigation state machine
-- **LangChain:** integration with the language model
+- **LangChain (`langchain`, `langchain-google-genai`):** the connection to the Gemma model
 - **pandas, NumPy:** data processing and calculations
-- **DuckDB:** analytical queries
+- **DuckDB:** analytical queries in the comparison tools
 - **Pydantic:** validation of structured model output
 - **Streamlit:** user interface
 - **Plotly:** charts
 - **python-dotenv:** loading environment variables
-- **Demo dataset:** TODO (a synthetic sales dataset generated by the team)
+- **Demo dataset:** synthetic, created by the team with `data/generate_demo.py`
 
 TODO: licenses and attribution for each component.
 
@@ -147,7 +182,7 @@ TODO: licenses and attribution for each component.
 ### Prerequisites
 
 - Python 3.11+
-- TODO: access to a Gemma model (provider and API key)
+- Optional: a Google AI Studio API key with access to a Gemma 4 model. Without it, the app runs with the local fallback.
 
 ### Installation
 
@@ -159,25 +194,33 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-TODO: `requirements.txt` is not in the repository yet.
-
 ### Environment Variables
 
 ```env
-TODO: depends on the Gemma provider chosen
+GEMMA_API_KEY=
+GEMMA_MODEL=gemma-4-26b-a4b-it
 ```
 
-Copy `.env.example` to `.env` and fill it in. Never commit `.env`.
+Copy `.env.example` to `.env` and fill in your key. `.env` is listed in `.gitignore`; never commit it.
 
 ### Running the Project
 
 ```bash
-TODO: run command (planned: streamlit run app.py)
+streamlit run app.py
+```
+
+To run the tests:
+
+```bash
+python -m unittest discover -s tests -v
 ```
 
 ### Usage
 
-TODO: steps to upload a CSV and ask a question, once the app runs.
+1. In the sidebar, upload a CSV or choose **Try the demo dataset**. The sidebar shows the dataset profile.
+2. Type a question, for example "Why did revenue fall in March?".
+3. Click **Investigate**.
+4. Read the baseline, the hypothesis table with verdicts, and the evidence for each hypothesis, then the final synthesis.
 
 ## Challenges and Learnings
 
@@ -206,7 +249,7 @@ TODO
 - [x] Solution and key features documented
 - [x] Innovation and differentiation explained
 - [x] Architecture included
-- [ ] Technical implementation documented
+- [x] Technical implementation documented
 - [ ] Work completed during the hackathon documented
 - [ ] Team contributions documented
 - [ ] Working application is functional
@@ -217,6 +260,6 @@ TODO
 - [ ] Challenges and learnings documented
 - [ ] Devpost submission completed
 - [ ] Devpost link added
-- [ ] Credits added
+- [x] Credits added
 - [ ] License added
 - [ ] Repository is organized and complete
