@@ -182,6 +182,8 @@ TODO: how to access the deployed application and what can be tested.
 
 ## Demo Video
 
+**Demo materials (Google Drive):** https://drive.google.com/drive/folders/1wRbACZ4MTcArcreI3s-qLLiXIIoMmlK5
+
 **Demo Video:** TODO
 
 ## Open Source and AI Usage
