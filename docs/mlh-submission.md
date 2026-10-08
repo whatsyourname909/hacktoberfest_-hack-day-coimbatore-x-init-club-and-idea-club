@@ -69,10 +69,10 @@ Argue With My Data is built entirely on open-source components (LangGraph, LangC
 
 1. **Bring `main` up to date.** The code is on GitHub's `main`, but the latest README and documentation fixes are on `pranav`. Merge them into `main`, because the repository link judges open shows `main`.
 2. **Confirm Gemma works live.** The code on `main` uses `gemma-4-26b-a4b-it`, but no live Gemma run has succeeded yet, and the README still says so. Don't enter "Best Use of Gemma 4" unless a real Gemma 4 run succeeds.
-3. **Add a license.** The event's "Best Open-Source AI Project" rules require a public GitHub repository **and** an open-source license. The README's License section is still TODO. MIT is the usual choice.
+3. **License:** done. The project is MIT-licensed (`LICENSE`). Make sure it reaches `main`.
 4. **Add the live app link and demo video** if you have them. The demo video should say the event name at the start.
 5. **Complete the README's TODOs:** team contributions, AI tools used by every teammate, challenges and learnings.
-6. **List teammates' AI tools.** `ai_tools` above covers only Claude Code with Claude Opus 5.5. If teammates used other tools (for example Codex, which may have written the original code), MLH requires disclosing them, in the README and in the submission.
+6. **Disclose every AI tool.** `ai_tools` above lists only Claude Code with Claude Opus 5.5, as the submission prompt asked. The team also used OpenAI Codex, ChatGPT and Gemini / Gemini CLI. These are listed in the README; mention them in the MLH description too, since MLH requires disclosing all AI tools used.
 
 ## Notes from the event page
 

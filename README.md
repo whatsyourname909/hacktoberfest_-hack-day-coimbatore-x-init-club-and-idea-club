@@ -165,7 +165,13 @@ TODO: how to access the deployed application and what can be tested.
 ### AI / Models
 
 - **Gemma 4 (Google),** default model `gemma-4-26b-a4b-it`, called through the Google Gemini API using `langchain-google-genai`. It parses the question, proposes hypotheses, reviews the evidence as a critic, and chooses which supported explanation to lead with. It doesn't compute numbers or assign verdicts. Responses are requested as JSON and validated with Pydantic; the integration doesn't rely on the API's native structured-output mode. See Google's [Gemma on the Gemini API guide](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api). TODO: confirm a successful live run with Gemma before the demo.
-- **AI coding assistants:** Claude Code (Anthropic, Claude Opus 5.5) was used for planning, repository setup and documentation. TODO: list every other AI tool the team used while coding.
+- **AI coding assistants used by the team while building the project:**
+  - Claude Code (Anthropic, Claude Opus 5.5): planning, repository setup, testing and documentation
+  - OpenAI Codex
+  - ChatGPT (OpenAI)
+  - Gemini / Gemini CLI (Google)
+
+  The team reviewed, tested and integrated all AI-assisted code. TODO: add what each tool was used for, if known.
 
 ### Open Source Components
 
@@ -254,7 +260,11 @@ These setup steps were tested on a fresh clone of `main` (macOS, Python 3.13): i
 
 ## Challenges and Learnings
 
-TODO: complete at the end of the Hack Day.
+- **Code that only worked on one Python version.** An earlier version of the app crashed on Python 3.13 because of an undefined type hint that Python 3.14 never evaluates. Its tests passed for its author and failed for us. **Learning:** run the tests on a fresh clone, on a different machine, before trusting "all tests pass".
+- **A Gemma call that never returned.** The first live investigation sat waiting on the Gemini API for minutes, with no error and no timeout, because failed calls were retried silently. **Learning:** every model call needs a timeout and a fast, honest fallback, especially for a live demo. We added a 30-second timeout and a schema-validated local fallback.
+- **Keeping the model honest.** Our first designs let the language model decide verdicts after seeing the numbers, the very thing the project argues against. **Learning:** fix the thresholds before the test runs and apply them in code. The model proposes and challenges, but it can't change a verdict.
+- **Two versions of the same project.** Team members built separate versions in parallel, and they collided when both were merged into `main`. **Learning:** agree on one base early, work on branches, and merge often.
+- **Secrets in shared zips.** A project zip shared between team members included the `.env` file with an API key. `.gitignore` protects git, not zips. **Learning:** share code through the repository or `package_source.py`, never a hand-made zip.
 
 ## Devpost Submission
 
@@ -268,7 +278,7 @@ LangGraph, LangChain, pandas, NumPy, DuckDB, Pydantic, Streamlit, Plotly, python
 
 ### License
 
-TODO
+This project is licensed under the [MIT License](LICENSE).
 
 ## Verification
 
@@ -295,11 +305,11 @@ The 9 tests cover the bundled dataset's baseline, each analysis tool, verificati
 - [x] Working application is functional
 - [ ] Live application link added where applicable
 - [ ] Demo video added
-- [ ] AI and open-source components documented
+- [x] AI and open-source components documented
 - [x] Setup and usage instructions tested
 - [ ] Challenges and learnings documented
 - [ ] Devpost submission completed
 - [ ] Devpost link added
 - [x] Credits added
-- [ ] License added
+- [x] License added
 - [ ] Repository is organized and complete
