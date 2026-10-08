@@ -46,6 +46,20 @@ def render_profile(info: dict):
 def render_investigation(result: dict):
     """Render the full investigation results with a polished layout."""
 
+
+    # --- Gemma Usage Status ---
+    gemma_status = {
+        "Parsing": result.get("gemma_used_parse", False),
+        "Hypotheses": result.get("gemma_used_hypotheses", False),
+        "Test Planning": result.get("gemma_used_plan", False),
+        "Criticism": result.get("gemma_used_critic", False),
+        "Synthesis": result.get("gemma_used_synthesis", False),
+    }
+    status_str = " - ".join([f"{'[Y]' if v else '[N]'} {k}" for k, v in gemma_status.items()])
+    status_str = status_str.replace("[Y]", "YES").replace("[N]", "NO")
+    st.markdown(f'<div style="margin-bottom:16px; padding:12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:8px; font-size:14px; color:#e2e8f0;"><strong>Gemma AI actively used for:</strong> {status_str}</div>', unsafe_allow_html=True)
+    st.divider()
+
     # --- Baseline section ---
     change = result["overall_change"]
     pct = change.get("percent_change")

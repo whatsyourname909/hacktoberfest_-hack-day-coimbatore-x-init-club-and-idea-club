@@ -1,6 +1,6 @@
 # Argue With My Data
 
-> An AI data investigation agent that tries to falsify its own explanations before it answers. Upload a CSV, ask why a metric changed, and it tests competing explanations with deterministic calculations to show which ones the evidence supports, weakens, rejects or can't test.
+> An AI data investigation agent that tries to falsify its own explanations before it answers. Upload a CSV or Excel file, ask why a metric changed, and it tests competing explanations with deterministic calculations to show which ones the evidence supports, weakens, rejects or can't test.
 
 ## Team
 
@@ -183,6 +183,8 @@ TODO: how to access the deployed application and what can be tested.
 - **Streamlit:** user interface
 - **Plotly:** charts
 - **python-dotenv:** loading environment variables
+- **openpyxl, xlrd:** reading uploaded Excel files (.xlsx and .xls)
+- **chardet:** detecting the text encoding of uploaded CSV and TSV files
 - **Demo dataset:** synthetic, created by the team with `data/generate_demo.py`
 
 Licenses, as declared in each package's metadata (versions installed from `requirements.txt` during testing):
@@ -198,6 +200,9 @@ Licenses, as declared in each package's metadata (versions installed from `requi
 | python-dotenv | 1.2.4 | BSD-3-Clause |
 | DuckDB | 1.5.6 | MIT |
 | Plotly | 6.9.0 | MIT |
+| openpyxl | 3.1.5 | MIT |
+| xlrd | 2.0.2 | BSD |
+| chardet | 5.2.0 | LGPL (used unmodified, as a separately installed dependency) |
 
 The Gemma models are provided by Google under Google's own terms for Gemma; check the terms for the model version you use. All of these components were developed by their respective authors, not by this team.
 
@@ -253,7 +258,8 @@ These setup steps were tested on a fresh clone of `main` (macOS, Python 3.13): i
 
 ### Usage
 
-1. In the sidebar, upload a CSV or choose **Try the demo dataset**. The sidebar shows the dataset profile.
+1. In the sidebar, choose **Try the demo dataset**, or upload your own file: **CSV, TSV or Excel (.xlsx, .xls)**. CSV and TSV text encodings are detected automatically (UTF-8, Windows-1252, Latin-1 and others). The sidebar shows the dataset profile.
+   The sidebar also shows whether a Gemma API key is set; whether Gemma actually answered each step is shown with the results.
 2. Type a question, for example "Why did revenue fall in March?".
 3. Click **Investigate**.
 4. Read the baseline, the hypothesis table with verdicts, and the evidence for each hypothesis, then the final synthesis.

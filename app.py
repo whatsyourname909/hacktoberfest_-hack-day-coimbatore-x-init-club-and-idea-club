@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
+import html
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -11,6 +12,47 @@ load_dotenv(ROOT / ".env")
 from analysis.profiling import profile_data
 from graph.graph import investigation_graph
 from ui.components import render_investigation, render_profile
+
+
+def read_uploaded_file(uploaded) -> pd.DataFrame:
+    """Read an uploaded file (CSV, TSV, XLSX, XLS) into a DataFrame.
+
+    CSV/TSV text encodings are tried in order: UTF-8 (with or without a BOM),
+    chardet's guess when it is reasonably confident, Windows-1252 (the usual
+    encoding of CSVs exported from Excel on Windows), then Latin-1, which
+    decodes any byte sequence and so always succeeds.
+    """
+    from io import BytesIO
+
+    name = uploaded.name.lower()
+
+    # Excel files
+    if name.endswith(".xlsx"):
+        return pd.read_excel(uploaded, engine="openpyxl")
+    if name.endswith(".xls"):
+        return pd.read_excel(uploaded, engine="xlrd")
+
+    # CSV / TSV
+    sep = "\t" if name.endswith(".tsv") else ","
+    raw_bytes = uploaded.getvalue()
+
+    encodings = ["utf-8-sig"]
+    try:
+        import chardet
+
+        detected = chardet.detect(raw_bytes[:100_000])
+        if detected.get("encoding") and (detected.get("confidence") or 0) >= 0.5:
+            encodings.append(detected["encoding"])
+    except ImportError:
+        pass
+    encodings += ["cp1252", "latin-1"]
+
+    for encoding in dict.fromkeys(encoding.lower() for encoding in encodings):
+        try:
+            return pd.read_csv(BytesIO(raw_bytes), sep=sep, encoding=encoding)
+        except (UnicodeDecodeError, LookupError):
+            continue  # wrong encoding; try the next one. Other CSV errors are raised to the caller.
+    raise ValueError("Could not decode this file's text encoding.")
 
 # --- Page config & theming ---
 st.set_page_config(page_title="Argue With My Data", page_icon="🧪", layout="wide")
@@ -78,12 +120,17 @@ with st.sidebar:
     st.markdown("### 📁 Your data")
     source = st.radio(
         "Dataset",
-        ["Try the demo dataset", "Upload a CSV"],
+        ["Try the demo dataset", "Upload a file"],
         label_visibility="collapsed",
     )
     uploaded = None
-    if source == "Upload a CSV":
-        uploaded = st.file_uploader("Upload a CSV", type=["csv"], label_visibility="collapsed")
+    if source == "Upload a file":
+        uploaded = st.file_uploader(
+            "Upload a data file",
+            type=["csv", "tsv", "xlsx", "xls"],
+            label_visibility="collapsed",
+            help="Supported formats: CSV, TSV, Excel (.xlsx, .xls)",
+        )
 
     frame = None
     if source == "Try the demo dataset":
@@ -91,9 +138,9 @@ with st.sidebar:
         st.caption("📦 Built-in adversarial sales example")
     elif uploaded:
         try:
-            frame = pd.read_csv(uploaded)
+            frame = read_uploaded_file(uploaded)
         except Exception as exc:
-            st.error(f"Could not read this CSV: {exc}")
+            st.error(f"Could not read this file: {exc}")
 
     if frame is not None:
         try:
@@ -106,8 +153,9 @@ with st.sidebar:
     st.divider()
     api_key = os.getenv("GEMMA_API_KEY")
     if api_key:
-        st.caption("🟢 **Gemma API** connected")
+        st.caption("🔑 **Gemma API key** set")
         st.caption(f"Model: `{os.getenv('GEMMA_MODEL', 'gemma-4-26b-a4b-it')}`")
+        st.caption("Whether Gemma actually answered is shown, step by step, with each investigation's results.")
     else:
         st.caption("🔴 **Gemma API** not configured")
         st.caption("Set `GEMMA_API_KEY` in `.env` for AI-powered parsing. The app works without it using local fallbacks.")
@@ -183,7 +231,7 @@ else:
                     f'<div style="background:rgba(99,102,241,0.08); padding:10px 16px; '
                     f'border-radius:8px; margin-bottom:16px;">'
                     f'<span style="color:#94a3b8;">Investigating:</span> '
-                    f'<strong style="color:#e2e8f0;">{question.strip()}</strong></div>',
+                    f'<strong style="color:#e2e8f0;">{html.escape(question.strip())}</strong></div>',
                     unsafe_allow_html=True,
                 )
             render_investigation(result)

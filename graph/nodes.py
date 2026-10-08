@@ -76,7 +76,9 @@ def parse_question(state: InvestigationState) -> dict:
             f"Question: {state['question']}\nSchema: {json.dumps(info, default=str)}"
         )
         plan = structured_call(QuestionPlan, prompt)
+        gemma_used_parse = True
         if plan is None:
+            gemma_used_parse = False
             plan = _fallback_plan(state["question"], info)
             if os.getenv("GEMMA_API_KEY"):
                 warning = "Gemma response could not be validated; used the local parser instead."
@@ -99,12 +101,14 @@ def parse_question(state: InvestigationState) -> dict:
             return {"error": str(fallback_exc)}
         if os.getenv("GEMMA_API_KEY"):
             warning = f"Gemma parsing encountered an issue; used the local parser instead."
+        gemma_used_parse = False
     return {
         "metric": plan.metric, "date_column": plan.date_column,
         "period_a": plan.period_a, "period_b": plan.period_b,
         "question_type": plan.question_type,
         "candidate_dimensions": plan.candidate_dimensions,
         "warning": warning, "error": None,
+        "gemma_used_parse": gemma_used_parse,
     }
 
 
@@ -155,6 +159,7 @@ def generate_hypotheses(state: InvestigationState) -> dict:
     )
     try:
         result = structured_call(HypothesisSet, prompt)
+        gemma_used_hypotheses = result is not None
         hypotheses = result.hypotheses if result else _fallback_hypotheses(state)
         if not 3 <= len(hypotheses) <= 5:
             raise ValueError("Hypothesis count must be between 3 and 5.")
@@ -164,10 +169,11 @@ def generate_hypotheses(state: InvestigationState) -> dict:
             if item.test in {"contribution", "mix"} and item.dimension is None:
                 raise ValueError("Dimension hypotheses must select an available dimension.")
         hypotheses = [item.model_copy(update={"id": f"h{i}"}) for i, item in enumerate(hypotheses, 1)]
-        return {"hypotheses": [item.model_dump() for item in hypotheses], "error": None}
+        return {"hypotheses": [item.model_dump() for item in hypotheses], "gemma_used_hypotheses": gemma_used_hypotheses, "error": None}
     except Exception as exc:
         return {"hypotheses": [item.model_dump() for item in _fallback_hypotheses(state)],
                 "warning": "Used locally generated hypotheses." if os.getenv("GEMMA_API_KEY") else None,
+                "gemma_used_hypotheses": False,
                 "error": None}
 
 
@@ -200,6 +206,7 @@ def plan_tests(state: InvestigationState) -> dict:
     )
     try:
         result = structured_call(TestPlanSet, prompt)
+        gemma_used_plan = True
         if result is None:
             raise ValueError("Gemma is not configured.")
         ids = {h["id"] for h in hypotheses}
@@ -243,13 +250,14 @@ def plan_tests(state: InvestigationState) -> dict:
                 ["UNTESTABLE with fewer than 24 observed months; a seasonal claim needs repeated yearly history."]
             ),
         ) for h in hypotheses]
+        gemma_used_plan = False
     contracts = [contract.model_copy(update={
         "decision_rules": _decision_rules(contract.test),
         "support_threshold": _decision_thresholds(contract.test)[0],
         "weaken_threshold": _decision_thresholds(contract.test)[1],
     }) for contract in contracts]
     plans = [contract.model_dump() for contract in contracts]
-    return {"test_plans": plans, "iteration": state.get("iteration", 0) + 1, "error": None}
+    return {"test_plans": plans, "iteration": state.get("iteration", 0) + 1, "gemma_used_plan": gemma_used_plan, "error": None}
 
 
 def execute_test(state: InvestigationState) -> dict:
@@ -421,9 +429,11 @@ def critic(state: InvestigationState) -> dict:
         f"Question: {state['question']}\nBaseline: {json.dumps(state['overall_change'])}\n"
         f"Evidence: {json.dumps(state.get('test_results', []), default=str)}\nVerification: {json.dumps(state.get('verification', {}))}"
     )
+    gemma_used_critic = False
     try:
         review = structured_call(CriticReview, prompt)
         if review:
+            gemma_used_critic = True
             known = {item["hypothesis_id"] for item in verdicts}
             llm_by_id = {item.hypothesis_id: item for item in review.verdicts if item.hypothesis_id in known}
             # Keep numeric verdicts evidence-grounded; retain the critic's challenge as a note.
@@ -439,6 +449,7 @@ def critic(state: InvestigationState) -> dict:
     except Exception:
         pass
     return {"verdicts": verdicts, "evidence": state.get("test_results", []),
+            "gemma_used_critic": gemma_used_critic,
             "needs_more_tests": any(not results.get(h["id"]) for h in state.get("hypotheses", [])), "error": None}
 
 
@@ -454,6 +465,7 @@ def final_synthesis(state: InvestigationState) -> dict:
     hypotheses = {item["id"]: item for item in state.get("hypotheses", [])}
     winner = next((hypotheses[item["hypothesis_id"]] for item in state.get("verdicts", [])
                    if item["verdict"] == "SUPPORTED"), None)
+    gemma_used_synthesis = False
     try:
         choice = structured_call(SynthesisChoice, (
             "Select the strongest supported hypothesis from this verified investigation. Choose only an existing hypothesis ID "
@@ -461,6 +473,8 @@ def final_synthesis(state: InvestigationState) -> dict:
             f"Question: {state['question']}\nHypotheses: {json.dumps(state.get('hypotheses', []))}\n"
             f"Verified verdicts: {json.dumps(state.get('verdicts', []))}\nBaseline: {json.dumps(state['overall_change'])}"
         ))
+        if choice:
+            gemma_used_synthesis = True
         if choice and choice.strongest_supported_hypothesis_id:
             chosen_id = choice.strongest_supported_hypothesis_id
             if verdicts.get(chosen_id, {}).get("verdict") == "SUPPORTED":
@@ -479,4 +493,4 @@ def final_synthesis(state: InvestigationState) -> dict:
         hypothesis = hypotheses[item["hypothesis_id"]]
         lines.append(f"{item['verdict']}: {hypothesis['statement']} {item['rationale']}")
     lines.append("These results describe contribution and association; they do not establish causation.")
-    return {"final_report": "\n\n".join(lines), "error": None}
+    return {"final_report": "\n\n".join(lines), "gemma_used_synthesis": gemma_used_synthesis, "error": None}

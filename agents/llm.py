@@ -9,9 +9,8 @@ load_dotenv()
 
 _cached_model = None
 
-
 def gemma():
-    """Return the configured Gemma chat model, or None when no key is set."""
+    """Return the configured Gemma 4 chat model, or None when no key is set."""
     global _cached_model
     api_key = os.getenv("GEMMA_API_KEY")
     if not api_key:
@@ -26,9 +25,9 @@ def gemma():
         google_api_key=api_key,
         max_output_tokens=1024,
         timeout=30,
+        max_retries=1,
     )
     return _cached_model
-
 
 def structured_call(schema, prompt: str):
     model = gemma()

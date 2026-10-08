@@ -22,4 +22,9 @@ class InvestigationState(TypedDict, total=False):
     needs_more_tests: bool
     final_report: str | None
     error: str | None
+    gemma_used_parse: bool
+    gemma_used_hypotheses: bool
+    gemma_used_plan: bool
+    gemma_used_critic: bool
+    gemma_used_synthesis: bool
     warning: str | None
