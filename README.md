@@ -4,7 +4,7 @@
 
 ## Team
 
-**Team Name:** TODO
+**Team Name:** Training with Vibes
 
 
 | Member                    | Contribution   |
