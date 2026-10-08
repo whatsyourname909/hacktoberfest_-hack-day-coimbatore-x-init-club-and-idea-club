@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -121,6 +122,43 @@ class InvestigationNodesTests(unittest.TestCase):
         result = investigation_graph.invoke({"dataset": frame, "question": "Why did revenue fall in March?"})
         self.assertEqual(result["overall_change"]["value_b"], 7_940_000)
         self.assertTrue(result["verification"]["passed"])
+
+
+
+class QuestionHandlingTests(unittest.TestCase):
+    def setUp(self):
+        from analysis.profiling import profile_data
+        _, self.info = profile_data(pd.read_csv(Path(__file__).resolve().parents[1] / "data" / "demo_sales.csv"))
+
+    def test_two_named_months_are_compared_directly(self):
+        from graph.nodes import _period_defaults
+        self.assertEqual(_period_defaults("What changed between February and March?", self.info), ("2026-02", "2026-03"))
+        self.assertEqual(_period_defaults("Compare March and February revenue", self.info), ("2026-02", "2026-03"))
+
+    def test_validator_accepts_short_real_questions(self):
+        from analysis.question_validator import validate_question_local
+        for question in ["Was this decline seasonal?", "Which departments had the highest attrition?"]:
+            self.assertTrue(validate_question_local(question, self.info)["valid"], question)
+
+    def test_validator_rejects_unusable_input(self):
+        from analysis.question_validator import validate_question_local
+        for question in ["", "revenue", "123 456 789"]:
+            self.assertFalse(validate_question_local(question, self.info)["valid"], question)
+
+    def test_every_suggested_demo_question_runs(self):
+        import json
+        from analysis.profiling import profile_data
+        from graph.graph import investigation_graph
+        root = Path(__file__).resolve().parents[1] / "data"
+        with patch.dict(os.environ, {"GEMMA_API_KEY": ""}):
+            for meta in json.loads((root / "datasets.json").read_text(encoding="utf-8"))["datasets"]:
+                frame = pd.read_csv(root / meta["file"])
+                _, info = profile_data(frame)
+                for question in meta["suggested_questions"]:
+                    result = investigation_graph.invoke({"dataset": frame, "question": question, "dataset_info": info},
+                                                        config={"recursion_limit": 20})
+                    self.assertIsNone(result.get("error"), f"{meta['id']}: {question}")
+                    self.assertTrue(result["verification"]["passed"], f"{meta['id']}: {question}")
 
 
 if __name__ == "__main__":

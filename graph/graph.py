@@ -2,7 +2,7 @@ from langgraph.graph import END, START, StateGraph
 
 from graph.nodes import (calculate_baseline, critic, execute_test, final_synthesis,
                          generate_hypotheses, parse_question, plan_tests, profile_data,
-                         route_next, verify_result)
+                         route_next, verify_result, validate_question)
 from graph.state import InvestigationState
 
 
@@ -13,6 +13,7 @@ def _stop_on_error(state: InvestigationState) -> str:
 def build_graph():
     builder = StateGraph(InvestigationState)
     nodes = {
+        "validate_question": validate_question,
         "profile_data": profile_data,
         "parse_question": parse_question,
         "calculate_baseline": calculate_baseline,
@@ -25,7 +26,8 @@ def build_graph():
     }
     for name, node in nodes.items():
         builder.add_node(name, node)
-    builder.add_edge(START, "profile_data")
+    builder.add_edge(START, "validate_question")
+    builder.add_conditional_edges("validate_question", _stop_on_error, {"stop": END, "continue": "profile_data"})
     for current, following in [
         ("profile_data", "parse_question"),
         ("parse_question", "calculate_baseline"),

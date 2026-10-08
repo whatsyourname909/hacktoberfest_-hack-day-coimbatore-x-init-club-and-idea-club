@@ -54,3 +54,9 @@ class CriticReview(BaseModel):
 class SynthesisChoice(BaseModel):
     strongest_supported_hypothesis_id: str | None
 
+
+class QuestionValidation(BaseModel):
+    is_valid: bool
+    reason: str | None = None
+    rephrased_question: str | None = None
+

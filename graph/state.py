@@ -3,6 +3,7 @@ from typing import Any, TypedDict
 
 class InvestigationState(TypedDict, total=False):
     question: str
+    question_validated: bool
     dataset: Any
     dataset_info: dict[str, Any]
     metric: str

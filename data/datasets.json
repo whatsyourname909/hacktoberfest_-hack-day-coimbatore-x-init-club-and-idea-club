@@ -1,0 +1,46 @@
+{
+  "datasets": [
+    {
+      "id": "sales",
+      "name": "Sales Revenue Analysis",
+      "file": "demo_sales.csv",
+      "description": "Monthly sales by customer, product and region for February and March 2026. Revenue falls 20.6%, and one large customer stops ordering.",
+      "suggested_questions": [
+        "Why did revenue fall in March?",
+        "Which products drove the revenue decline?",
+        "What explains the change in revenue between February and March?"
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing Campaign Performance",
+      "file": "demo_marketing.csv",
+      "description": "Daily campaign data by channel and campaign type, January to June 2026. Spend and conversions both rise sharply in March.",
+      "suggested_questions": [
+        "Why did spend increase in March?",
+        "Which channels drove the change in conversions in March?"
+      ]
+    },
+    {
+      "id": "hr",
+      "name": "Workforce Attrition Analysis",
+      "file": "demo_hr.csv",
+      "description": "Monthly workforce data by department and seniority, July 2025 to June 2026. Departures nearly triple in April.",
+      "suggested_questions": [
+        "Why did departures increase in April?",
+        "Which departments drove the increase in departures in April?"
+      ]
+    },
+    {
+      "id": "ecommerce",
+      "name": "E-Commerce Traffic & Revenue",
+      "file": "demo_ecommerce.csv",
+      "description": "Weekly traffic and sales by device and traffic source, January to April 2026. Revenue falls 44% in April.",
+      "suggested_questions": [
+        "Why did revenue drop in April?",
+        "Which devices drove the drop in sessions in April?",
+        "What explains the change in orders between March and April?"
+      ]
+    }
+  ]
+}

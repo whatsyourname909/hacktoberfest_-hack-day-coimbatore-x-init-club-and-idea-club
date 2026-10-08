@@ -21,6 +21,23 @@ MONTHS = {name.lower(): index for index, name in enumerate(
 ALLOWED_TESTS = {"contribution", "mix", "data_quality", "trend"}
 
 
+from analysis.question_validator import validate_question_local, validate_question_ai
+
+def validate_question(state: InvestigationState) -> dict:
+    question = state.get("question", "")
+    info = state.get("dataset_info", {})
+    
+    local_res = validate_question_local(question, info)
+    if not local_res["valid"]:
+        return {"error": local_res["reason"]}
+        
+    ai_res = validate_question_ai(question, info)
+    if not ai_res["valid"]:
+        return {"error": ai_res["reason"]}
+        
+    return {"error": None, "question_validated": True}
+
+
 def profile_data(state: InvestigationState) -> dict:
     try:
         data, info = run_profile(state["dataset"])
@@ -36,7 +53,25 @@ def _period_defaults(question: str, info: dict) -> tuple[str, str]:
     periods = [pd.Period(value, freq="M") for value in info.get("date_periods", {}).get(date_col, [])]
     if len(periods) < 2:
         return "", ""
-    month_match = re.search(r"\b(" + "|".join(MONTHS) + r")\b(?:\s+(20\d{2}))?", question, re.I)
+    month_pattern = r"\b(" + "|".join(MONTHS) + r")\b(?:\s+(20\d{2}))?"
+    named = []
+    for match in re.finditer(month_pattern, question, re.I):
+        month = MONTHS[match.group(1).lower()]
+        if match.group(2):
+            named.append(pd.Period(year=int(match.group(2)), month=month, freq="M"))
+        else:
+            candidates = [period for period in periods if period.month == month]
+            if not candidates:
+                raise ValueError(f"The requested month {match.group(1)} is not present in the dataset.")
+            named.append(max(candidates))
+    named = sorted(dict.fromkeys(named))
+    if len(named) >= 2:
+        # "between March and April": compare the two named months directly.
+        earlier, later = named[0], named[1]
+        if earlier in periods and later in periods:
+            return str(earlier), str(later)
+        raise ValueError(f"The requested months {earlier} and {later} are not both present in the dataset.")
+    month_match = re.search(month_pattern, question, re.I)
     if month_match:
         month = MONTHS[month_match.group(1).lower()]
         if month_match.group(2):

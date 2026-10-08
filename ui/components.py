@@ -1,51 +1,61 @@
+import html as html_module
+
 import pandas as pd
 import streamlit as st
 
 from ui.visualizations import baseline_chart, contribution_chart
 
 VERDICT_STYLE = {
-    "SUPPORTED":  ("✅", "#10b981", "rgba(16,185,129,0.12)"),
-    "WEAKENED":   ("⚠️", "#f59e0b", "rgba(245,158,11,0.12)"),
-    "REJECTED":   ("❌", "#ef4444", "rgba(239,68,68,0.12)"),
-    "UNTESTABLE": ("❓", "#6b7280", "rgba(107,114,128,0.12)"),
-    "PENDING":    ("⏳", "#6b7280", "rgba(107,114,128,0.12)"),
+    "SUPPORTED":  ("check_circle", "#10b981", "rgba(16,185,129,0.08)", "rgba(16,185,129,0.25)"),
+    "WEAKENED":   ("warning",      "#f59e0b", "rgba(245,158,11,0.08)", "rgba(245,158,11,0.25)"),
+    "REJECTED":   ("cancel",       "#ef4444", "rgba(239,68,68,0.08)",  "rgba(239,68,68,0.25)"),
+    "UNTESTABLE": ("help",         "#6b7280", "rgba(107,114,128,0.08)","rgba(107,114,128,0.25)"),
+    "PENDING":    ("schedule",     "#6b7280", "rgba(107,114,128,0.08)","rgba(107,114,128,0.25)"),
 }
 
 TEST_LABELS = {
-    "contribution": "📊 Contribution analysis",
-    "mix": "🔀 Mix analysis",
-    "data_quality": "🔍 Data quality check",
-    "trend": "📈 Trend analysis",
+    "contribution": "Contribution Analysis",
+    "mix": "Mix Analysis",
+    "data_quality": "Data Quality Check",
+    "trend": "Trend Analysis",
 }
+
+
+def _icon(name: str, color: str = "#94a3b8", size: int = 18) -> str:
+    """Render a Material Symbols icon inline."""
+    return (
+        f'<span class="material-symbols-outlined" '
+        f'style="font-size:{size}px;color:{color};vertical-align:middle;margin-right:6px;">'
+        f'{name}</span>'
+    )
 
 
 def render_profile(info: dict):
     """Render a compact dataset profile in the sidebar."""
-    st.markdown("##### 📋 Dataset overview")
+    st.markdown(f"##### {_icon('table_chart', '#94a3b8', 16)}Dataset Overview", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     col1.metric("Rows", f"{info['row_count']:,}")
     col2.metric("Columns", len(info["columns"]))
 
     if info["date_ranges"]:
         for column, date_range in info["date_ranges"].items():
-            st.caption(f"📅 **{column}:** {date_range['min'][:10]} → {date_range['max'][:10]}")
+            st.caption(f"**{column}:** {date_range['min'][:10]} to {date_range['max'][:10]}")
 
     if info["likely_metrics"]:
-        st.caption("📐 **Metrics:** " + ", ".join(f"`{m}`" for m in info["likely_metrics"]))
+        st.caption("**Metrics:** " + ", ".join(f"`{m}`" for m in info["likely_metrics"]))
     if info["likely_dimensions"]:
-        st.caption("📂 **Dimensions:** " + ", ".join(f"`{d}`" for d in info["likely_dimensions"]))
+        st.caption("**Dimensions:** " + ", ".join(f"`{d}`" for d in info["likely_dimensions"]))
 
     # Show missingness only if there are any issues
     missing_cols = {k: v for k, v in info.get("missingness", {}).items() if v > 0}
     if missing_cols:
-        st.caption("⚠️ **Missing data:** " + ", ".join(f"`{k}` {v:.0%}" for k, v in missing_cols.items()))
+        st.caption("**Missing data:** " + ", ".join(f"`{k}` {v:.0%}" for k, v in missing_cols.items()))
     else:
-        st.caption("✅ **No missing values detected**")
+        st.caption("**Data completeness:** No missing values")
 
 
 def render_investigation(result: dict):
     """Render the full investigation results with a polished layout."""
-
 
     # --- Gemma Usage Status ---
     gemma_status = {
@@ -55,17 +65,46 @@ def render_investigation(result: dict):
         "Criticism": result.get("gemma_used_critic", False),
         "Synthesis": result.get("gemma_used_synthesis", False),
     }
-    status_str = " - ".join([f"{'[Y]' if v else '[N]'} {k}" for k, v in gemma_status.items()])
-    status_str = status_str.replace("[Y]", "YES").replace("[N]", "NO")
-    st.markdown(f'<div style="margin-bottom:16px; padding:12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.15); border-radius:8px; font-size:14px; color:#e2e8f0;"><strong>Gemma AI actively used for:</strong> {status_str}</div>', unsafe_allow_html=True)
-    st.divider()
+
+    active_count = sum(1 for v in gemma_status.values() if v)
+    total_count = len(gemma_status)
+
+    pills = []
+    for label, used in gemma_status.items():
+        dot_color = "#10b981" if used else "#475569"
+        text_color = "#e2e8f0" if used else "#64748b"
+        pills.append(
+            f'<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;'
+            f'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);'
+            f'border-radius:6px;font-size:12px;color:{text_color};">'
+            f'<span style="width:6px;height:6px;border-radius:50%;background:{dot_color};'
+            f'display:inline-block;"></span>{label}</span>'
+        )
+    pills_html = " ".join(pills)
+
+    st.markdown(
+        f'<div style="margin-bottom:20px;padding:14px 18px;background:rgba(15,23,42,0.4);'
+        f'border:1px solid rgba(99,102,241,0.12);border-radius:10px;">'
+        f'<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:8px;'
+        f'letter-spacing:0.5px;text-transform:uppercase;">AI Pipeline Status'
+        f'<span style="float:right;font-size:12px;font-weight:400;color:#64748b;">'
+        f'{active_count}/{total_count} stages</span></div>'
+        f'<div style="display:flex;flex-wrap:wrap;gap:6px;">{pills_html}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("---")
 
     # --- Baseline section ---
     change = result["overall_change"]
     pct = change.get("percent_change")
     abs_change = change["absolute_change"]
 
-    st.markdown("### 📊 Baseline comparison")
+    st.markdown(
+        f'<h3 style="margin-bottom:4px;font-weight:600;color:#e2e8f0;">'
+        f'{_icon("bar_chart", "#6366f1", 22)}Baseline Comparison</h3>',
+        unsafe_allow_html=True,
+    )
     col_metric, col_chart = st.columns([1, 1.4])
 
     with col_metric:
@@ -77,55 +116,66 @@ def render_investigation(result: dict):
             delta=delta_str,
             delta_color=delta_color,
         )
-        st.caption(f"{change['period_a']} → {change['period_b']}")
+        st.caption(f"{change['period_a']} to {change['period_b']}")
         st.caption(f"Absolute change: **{abs_change:+,.0f}**")
 
     with col_chart:
         st.plotly_chart(baseline_chart(change), use_container_width=True, config={"displayModeBar": False})
 
-    st.divider()
+    st.markdown("---")
 
     # --- Verdict summary ---
     hypotheses = {item["id"]: item for item in result.get("hypotheses", [])}
     verdicts = {item["hypothesis_id"]: item for item in result.get("verdicts", [])}
 
-    st.markdown("### 🔬 Hypothesis verdicts")
+    st.markdown(
+        f'<h3 style="margin-bottom:4px;font-weight:600;color:#e2e8f0;">'
+        f'{_icon("science", "#6366f1", 22)}Hypothesis Verdicts</h3>',
+        unsafe_allow_html=True,
+    )
 
     for h_id, hypothesis in hypotheses.items():
         verdict_data = verdicts.get(h_id, {})
         verdict = verdict_data.get("verdict", "PENDING")
-        icon, color, bg_color = VERDICT_STYLE.get(verdict, VERDICT_STYLE["PENDING"])
+        icon_name, color, bg_color, border_color = VERDICT_STYLE.get(verdict, VERDICT_STYLE["PENDING"])
         contribution = verdict_data.get("contribution_pct")
-        contribution_text = f" · {contribution:.1f}% contribution" if contribution is not None else ""
-        rationale = verdict_data.get("rationale", "")
+        contribution_text = f" | {contribution:.1f}%" if contribution is not None else ""
+        rationale = html_module.escape(verdict_data.get("rationale", ""))
 
         st.markdown(
             f'<div style="background:{bg_color}; border-left:3px solid {color}; '
-            f'padding:12px 16px; border-radius:8px; margin-bottom:8px;">'
-            f'<div style="display:flex; justify-content:space-between; align-items:center;">'
-            f'<span style="font-weight:600; color:#e2e8f0;">{icon} {hypothesis["statement"]}</span>'
-            f'<span style="background:{color}; color:white; padding:2px 10px; border-radius:12px; '
-            f'font-size:0.78em; font-weight:600;">{verdict}{contribution_text}</span>'
+            f'padding:14px 18px; border-radius:8px; margin-bottom:10px;">'
+            f'<div style="display:flex; justify-content:space-between; align-items:center;gap:12px;">'
+            f'<span style="font-weight:600; color:#e2e8f0;font-size:14px;">'
+            f'{_icon(icon_name, color, 18)}{html_module.escape(hypothesis["statement"])}</span>'
+            f'<span style="background:{color}; color:white; padding:3px 12px; border-radius:6px; '
+            f'font-size:0.75em; font-weight:600;white-space:nowrap;letter-spacing:0.5px;">'
+            f'{verdict}{contribution_text}</span>'
             f'</div>'
-            f'<div style="color:#94a3b8; font-size:0.88em; margin-top:4px;">{rationale}</div>'
+            f'<div style="color:#94a3b8; font-size:0.85em; margin-top:6px;line-height:1.5;">{rationale}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
-    st.divider()
+    st.markdown("---")
 
     # --- Evidence trace (expandable) ---
-    st.markdown("### 🔎 Evidence trace")
+    st.markdown(
+        f'<h3 style="margin-bottom:4px;font-weight:600;color:#e2e8f0;">'
+        f'{_icon("search", "#6366f1", 22)}Evidence Trace</h3>',
+        unsafe_allow_html=True,
+    )
     results_by_id = {item["hypothesis_id"]: item for item in result.get("test_results", [])}
 
     for h_id, hypothesis in hypotheses.items():
         test_result = results_by_id.get(h_id, {})
         verdict_data = verdicts.get(h_id, {})
         verdict = verdict_data.get("verdict", "PENDING")
-        icon = VERDICT_STYLE.get(verdict, VERDICT_STYLE["PENDING"])[0]
+        icon_name = VERDICT_STYLE.get(verdict, VERDICT_STYLE["PENDING"])[0]
+        color = VERDICT_STYLE.get(verdict, VERDICT_STYLE["PENDING"])[1]
         test_label = TEST_LABELS.get(test_result.get("test", ""), test_result.get("test", "Not run"))
 
-        with st.expander(f"{icon} {hypothesis['statement']}", expanded=False):
+        with st.expander(f"[{verdict}] {hypothesis['statement']}", expanded=False):
             # Test info
             col1, col2 = st.columns(2)
             col1.markdown(f"**Test:** {test_label}")
@@ -135,12 +185,12 @@ def render_investigation(result: dict):
             contract = test_result.get("contract", {})
             if contract.get("support_threshold") is not None:
                 st.markdown(
-                    f"**Thresholds:** Support ≥ {contract['support_threshold']:.0%} · "
-                    f"Weaken ≥ {contract.get('weaken_threshold', 0):.0%}"
+                    f"**Thresholds:** Support >= {contract['support_threshold']:.0%} | "
+                    f"Weaken >= {contract.get('weaken_threshold', 0):.0%}"
                 )
             if contract.get("decision_rules"):
                 for rule in contract["decision_rules"]:
-                    st.caption(f"📏 {rule}")
+                    st.caption(f"Rule: {rule}")
 
             # Results
             if test_result.get("error"):
@@ -190,14 +240,18 @@ def render_investigation(result: dict):
 
             # Critic note
             if verdict_data.get("critic_note"):
-                st.markdown(f"💬 **Critic:** {verdict_data['critic_note']}")
+                st.markdown(f"**Critic:** {verdict_data['critic_note']}")
             if verdict_data.get("alternative_explanation"):
-                st.caption(f"🔄 Alternative: {verdict_data['alternative_explanation']}")
+                st.caption(f"Alternative: {verdict_data['alternative_explanation']}")
 
-    st.divider()
+    st.markdown("---")
 
     # --- Final answer ---
-    st.markdown("### 💡 Final answer")
+    st.markdown(
+        f'<h3 style="margin-bottom:4px;font-weight:600;color:#e2e8f0;">'
+        f'{_icon("lightbulb", "#6366f1", 22)}Synthesis</h3>',
+        unsafe_allow_html=True,
+    )
     report = result.get("final_report", "No synthesis was produced.")
 
     # Parse the report into structured display
@@ -205,19 +259,25 @@ def render_investigation(result: dict):
     if lines:
         # First line is the summary — highlight it
         st.markdown(
-            f'<div style="background:rgba(99,102,241,0.1); border-left:3px solid #6366f1; '
-            f'padding:16px; border-radius:8px; margin-bottom:16px;">'
-            f'<span style="color:#e2e8f0; font-size:1.05em;">{lines[0]}</span></div>',
+            f'<div style="background:rgba(99,102,241,0.06); border-left:3px solid #6366f1; '
+            f'padding:16px 20px; border-radius:8px; margin-bottom:16px;">'
+            f'<span style="color:#e2e8f0; font-size:1.02em;line-height:1.6;">'
+            f'{html_module.escape(lines[0])}</span></div>',
             unsafe_allow_html=True,
         )
         # Remaining lines
         for line in lines[1:]:
-            if line.startswith("SUPPORTED") or line.startswith("WEAKENED") or line.startswith("REJECTED") or line.startswith("UNTESTABLE"):
+            if line.startswith(("SUPPORTED", "WEAKENED", "REJECTED", "UNTESTABLE")):
                 verdict_word = line.split(":")[0].strip()
-                icon = VERDICT_STYLE.get(verdict_word, VERDICT_STYLE["PENDING"])[0]
-                st.markdown(f"{icon} {line}")
+                icon_name = VERDICT_STYLE.get(verdict_word, VERDICT_STYLE["PENDING"])[0]
+                color = VERDICT_STYLE.get(verdict_word, VERDICT_STYLE["PENDING"])[1]
+                st.markdown(
+                    f'<div style="padding:4px 0;color:#cbd5e1;font-size:14px;">'
+                    f'{_icon(icon_name, color, 16)}{html_module.escape(line)}</div>',
+                    unsafe_allow_html=True,
+                )
             elif "do not establish causation" in line.lower():
-                st.caption(f"⚖️ {line}")
+                st.caption(f"Disclaimer: {line}")
             else:
                 st.markdown(line)
 
@@ -225,6 +285,6 @@ def render_investigation(result: dict):
     verification = result.get("verification", {})
     if verification:
         if verification.get("passed"):
-            st.success("✅ All calculations independently verified")
+            st.success("All calculations independently verified")
         else:
-            st.warning("⚠️ Some calculations could not be fully verified")
+            st.warning("Some calculations could not be fully verified")
