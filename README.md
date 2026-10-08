@@ -7,12 +7,12 @@
 **Team Name:** Training with Vibes
 
 
-| Member                    | Contribution   |
-| ------------------------- | -------------- |
-| Krishav JS (Team Leader)  | TODO           |
-| Pranav Senthil            | TODO           |
-| Rahul Srinivasan          | TODO           |
-| Mohal Raj                 | TODO           |
+| Member                   | Contribution |
+| ------------------------ | ------------ |
+| Krishav JS (Team Leader) | Backend development |
+| Pranav Senthil           | Documentation, README and submission |
+| Rahul Srinivasan         | Troubleshooting and debugging |
+| Mohal Raj                | Frontend development |
 
 
 ## Problem Statement
@@ -145,10 +145,10 @@ TODO: add the team's account of who built what, and when, during the Hack Day.
 
 ### Team Contributions
 
-- **Krishav JS (Team Leader):** TODO
-- **Pranav Senthil:** TODO
-- **Rahul Srinivasan:** TODO
-- **Mohal Raj:** TODO
+- **Krishav JS (Team Leader):** Led backend development: the LangGraph investigation pipeline, the deterministic analysis tools and the Gemma integration.
+- **Pranav Senthil:** Owned documentation and submission: organized and wrote the README, prepared the MLH submission materials, and managed the repository's branches and merges.
+- **Rahul Srinivasan:** Led troubleshooting and debugging: tracked down and fixed issues in the code as the versions came together.
+- **Mohal Raj:** Led frontend development: the Streamlit interface, including the dataset overview, verdict display and evidence trace.
 
 ## Working Application
 
@@ -301,7 +301,7 @@ The 9 tests cover the bundled dataset's baseline, each analysis tool, verificati
 - [x] Architecture included
 - [x] Technical implementation documented
 - [ ] Work completed during the hackathon documented
-- [ ] Team contributions documented
+- [x] Team contributions documented
 - [x] Working application is functional
 - [ ] Live application link added where applicable
 - [ ] Demo video added
